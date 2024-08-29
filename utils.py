@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 from sage_data_client import query
+import numpy as np
 
 pd.set_option('mode.chained_assignment',None)
 
@@ -87,3 +88,19 @@ def calculate_cpu_utilization_from_cpuseconds(_df, new_t):
     _df["elapsed"] = _df.timestamp.diff().dt.total_seconds().cumsum()
     _df["cpu"] = _df.value.astype(float).diff().fillna(0) / _df.timestamp.diff().dt.total_seconds() * 100.
     return _df.loc[1:]
+
+def is_gpu_requested(plugin_instance_record: pd.Series):
+    if plugin_instance_record.plugin_selector is np.nan:
+        return False
+
+    selector = json.loads(plugin_instance_record.plugin_selector)
+    
+    if "resource.gpu" in selector and selector["resource.gpu"] == "true":
+        return True
+    return False
+
+def convert_nodename_to_devicename(node_name: str) -> str:
+    if "nx" in node_name:
+        return "Jetson"
+    elif "rpi" in node_name:
+        return "RaspberryPi"

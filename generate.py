@@ -12,6 +12,8 @@ from utils import *
 
 def generate_metrics_from_instance(t: tqdm, run: pd.Series):
     instance = run.k3s_pod_instance
+    device = convert_nodename_to_devicename(run.k3s_pod_node_name)
+    gpu_required = is_gpu_requested(run)
     plugin_name = run.plugin_name
     vsn = run.vsn
     started = pd.to_datetime(run.timestamp)
@@ -35,6 +37,7 @@ def generate_metrics_from_instance(t: tqdm, run: pd.Series):
         cpu["timestamp"] = pd.to_datetime(cpu["timestamp"], utc=True)
     else:
         cpu = calculate_cpu_utilization_from_cpuseconds(container_cpu_perf_df.copy(), started)[["timestamp", "cpu"]]
+        cpu = cpu.sort_values(by="timestamp")
 
     container_mem_rss_perf_df = container_perf_df[container_perf_df["name"]=="container_memory_rss"]
     container_mem_workingset_perf_df = container_perf_df[container_perf_df["name"]=="container_memory_working_set_bytes"]
@@ -45,7 +48,12 @@ def generate_metrics_from_instance(t: tqdm, run: pd.Series):
     else:
         container_mem_workingset_perf_df["mem"] = container_mem_workingset_perf_df["value"].values + container_mem_rss_perf_df["value"].values
         mem = container_mem_workingset_perf_df[["timestamp", "mem"]]
-    merged_instance = pd.merge_asof(cpu[["timestamp", "cpu"]], mem[["timestamp", "mem"]], on="timestamp")
+    try:
+        mem = mem.sort_values(by="timestamp")
+        merged_instance = pd.merge_asof(cpu[["timestamp", "cpu"]], mem[["timestamp", "mem"]], on="timestamp")
+    except ValueError as ex:
+        t.write(f'{instance}: ERROR="{ex}" DATA={cpu}')
+        return pd.DataFrame()
 
     if "meta.sensor" not in perf_df.columns:
         t.write(f'{instance}: meta.sensor field not found. Unable to retrive power measurements')
@@ -56,15 +64,19 @@ def generate_metrics_from_instance(t: tqdm, run: pd.Series):
         tegra_total_power = perf_df[(perf_df["name"] == "tegra_wattage_current_milliwatts") & (perf_df["meta.sensor"] == "vdd_in")]
         t.write(f'{instance}: {len(tegra_total_power)} tegra power metric records found')
         tegra_total_power = tegra_total_power.rename({"value": "sys_power"}, axis="columns")
+        tegra_total_power = tegra_total_power.sort_values(by="timestamp")
         merged_instance = pd.merge_asof(merged_instance, tegra_total_power[["timestamp", "sys_power"]], on="timestamp")
 
         tegra_cpugpu_power = perf_df[(perf_df["name"] == "tegra_wattage_current_milliwatts") & (perf_df["meta.sensor"] == "vdd_cpu_gpu_cv")]
         t.write(f'{instance}: {len(tegra_total_power)} tegra cpugpu power metric records found')
         tegra_cpugpu_power = tegra_cpugpu_power.rename({"value": "cpugpu_power"}, axis="columns")
+        tegra_cpugpu_power = tegra_cpugpu_power.sort_values(by="timestamp")
         merged_instance = pd.merge_asof(merged_instance, tegra_cpugpu_power[["timestamp", "cpugpu_power"]], on="timestamp")
 
     # Merging all metrics
     merged_instance["plugin_instance"] = instance
+    merged_instance["device"] = device
+    merged_instance["gpu_requested"] = gpu_required
     merged_instance['timestamp'] = merged_instance['timestamp'].map(lambda x: x.isoformat())
     t.write(f'{instance}: Generated {len(merged_instance)} records. Done.')
     return merged_instance
@@ -117,7 +129,7 @@ if __name__ == "__main__":
         help="Enable debugging")
     parser.add_argument(
         "-i", "--input", dest="input",
-        action="store",
+        action="store", required=True,
         help="Input plugin list in csv")
     parser.add_argument(
         "--resume", dest="resume",
