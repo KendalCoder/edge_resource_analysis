@@ -32,7 +32,7 @@ def job(vsn, start, end, output, bulk):
 
     logging.info(f'{len(df)} records found.')
     if len(df) == 0:
-        logging.info(f'Query {vsn} {args.start} {args.end} returned 0 records.')
+        logging.info(f'Query {vsn} {start_t} {end_t} returned 0 records.')
         return 0
 
     logging.info(f'Parsing the records.')
