@@ -1,0 +1,44 @@
+#!/usr/local/bin/python3
+import logging
+from pathlib import Path
+from string import Template
+
+import click
+
+@click.group()
+def create():
+    pass
+
+
+@create.command()
+@click.option("-t", "--template", required=True, type=Path, help="Template to use")
+@click.option("-n", "--name", required=True, help="Name of node")
+def node(template, name):
+    with open(template, "r") as file:
+        t = Template(file.read())
+    r = t.substitute({
+        "NAME": name,
+    })
+    with open("node.yaml", "w") as file:
+        file.write(r)
+
+
+@create.command()
+@click.option("-t", "--template", required=True, type=Path, help="Template to use")
+@click.option("-n", "--name", required=True, help="Name of pod")
+def pod(template, name):
+    with open(template, "r") as file:
+        t = Template(file.read())
+    r = t.substitute({
+        "NAME": name,
+    })
+    with open("pod.yaml", "w") as file:
+        file.write(r)
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)s: %(message)s',
+        datefmt='%Y/%m/%d %H:%M:%S')
+
+    create()
