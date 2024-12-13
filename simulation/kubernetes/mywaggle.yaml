@@ -1,0 +1,22 @@
+#env: waggle
+#workload: bitbrain
+scheduler: WaggleScheduler
+# dataloader: SimpleLoader
+visualization: wandb
+hosts:
+- name: T001
+  type: wsn
+  labels:
+    waggle.io/group: chicago
+- name: T002
+  type: wsn
+  labels:
+    waggle.io/group: nu
+- name: T003
+  type: wsn
+  labels:
+    waggle.io/group: chicago
+- name: T004
+  type: wsn
+  labels:
+    waggle.io/group: nu

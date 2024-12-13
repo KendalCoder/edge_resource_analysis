@@ -1,2 +1,4 @@
 click
 kubernetes
+wandb
+tqdm
