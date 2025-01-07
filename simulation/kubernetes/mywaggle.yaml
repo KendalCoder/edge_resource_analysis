@@ -1,7 +1,8 @@
 #env: waggle
 #workload: bitbrain
 scheduler: WaggleScheduler
-# dataloader: SimpleLoader
+dataloader: SimpleLoader
+steps: 30
 visualization: wandb
 hosts:
 - name: T001

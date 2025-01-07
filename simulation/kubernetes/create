@@ -29,9 +29,15 @@ def node(template, name):
 def pod(template, name):
     with open(template, "r") as file:
         t = Template(file.read())
-    r = t.substitute({
+    default = {
+        "REQUEST_CPU": "100m",
+        "REQUEST_MEMORY": "1Mi",
+        "SCHEDULER": "default-scheduler",
+    }
+    default.update({
         "NAME": name,
     })
+    r = t.substitute(default)
     with open("pod.yaml", "w") as file:
         file.write(r)
 

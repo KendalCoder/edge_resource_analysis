@@ -1,6 +1,13 @@
 class WaggleScheduler():
     def __init__(self):
-        pass
+        self.name = "waggle-scheduler"
 
-    def step(self):
-        pass
+    def __str__(self):
+        return self.name
+    
+    def schedule(self, workload, nodes: list):
+        return (workload, nodes[0])
+
+    def step(self, workloads: list, nodes: list):
+        for workload in workloads:
+            yield self.schedule(workload, nodes)
