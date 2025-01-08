@@ -1,3 +1,5 @@
+# from ..powermodels.xaviernx import PMXavierNX
+
 class WaggleScheduler():
     def __init__(self):
         self.name = "waggle-scheduler"
@@ -11,3 +13,6 @@ class WaggleScheduler():
     def step(self, workloads: list, nodes: list):
         for workload in workloads:
             yield self.schedule(workload, nodes)
+
+    def evaluate(self, workloads: list, nodes: list):
+        return {}

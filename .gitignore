@@ -1,2 +1,6 @@
 __pycache__
 data/
+
+# Do not publish simulation logs to git
+wandb/
+logs/

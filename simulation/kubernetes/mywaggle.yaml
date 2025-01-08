@@ -2,22 +2,27 @@
 #workload: bitbrain
 scheduler: WaggleScheduler
 dataloader: SimpleLoader
-steps: 30
-visualization: wandb
+steps: 10
+# visualization: WanDB
+visualization: TensorBoard
 hosts:
 - name: T001
-  type: wsn
+  device: xaviernx
   labels:
+    waggle.io/type: wsn
     waggle.io/group: chicago
 - name: T002
-  type: wsn
+  device: xaviernx
   labels:
+    waggle.io/type: wsn
     waggle.io/group: nu
 - name: T003
-  type: wsn
+  device: xaviernx
   labels:
+    waggle.io/type: wsn
     waggle.io/group: chicago
 - name: T004
-  type: wsn
+  device: xaviernx
   labels:
+    waggle.io/type: wsn
     waggle.io/group: nu
