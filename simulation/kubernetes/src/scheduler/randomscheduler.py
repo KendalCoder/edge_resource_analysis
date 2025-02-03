@@ -5,8 +5,6 @@ import random
 class RandomScheduler():
     def __init__(self):
         self.name = "random-scheduler"
-        # Quick and dirty way to be able to predict updated node cpu usage (see below)
-        self.kube_client = KubeClient(logger)
 
     def __str__(self):
         return self.name
