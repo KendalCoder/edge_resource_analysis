@@ -131,19 +131,12 @@ class Runner():
                     "MEMORY": pod.spec.containers[0].resources.requests["memory"],
                 })
             resource_usage = yaml.safe_load(r)
-            # self.kube_client.create_object(resource_usage)
             self.kube_client.update_resourceusage_object(pod.metadata.name, resource_usage)
         else:
             # Update the resource usage
             resource_usage["spec"]["cpu"] = pod.spec.containers[0].resources.requests["cpu"]
             resource_usage["spec"]["memory"] = pod.spec.containers[0].resources.requests["memory"]
             self.kube_client.update_resourceusage_object(pod.metadata.name, resource_usage)
-
-    def update_nodes_from_cluster(self):
-        nodes = self.kube_client.nodes_available()
-        for node in nodes:
-            device = node.labels.get("waggle.io/device", None)
-        return nodes
 
     def update_pods_on_fake_nodes(self):
         fake_nodes = list(self.kube_client.get_fake_nodes())
@@ -206,15 +199,14 @@ class Runner():
     def step(self, steps, events=[]):
         # Step: Apply events to the Kubernetes cluster
         # Sub-step: Create new workloads
-        new_workloads = self.dataloader.next()
-        for pod in self.create_pods(new_workloads, steps):
+        for pod in self.create_pods(events, steps):
             self.kube_client.create_object(pod)
             self.logger.info(f'Pod {pod["metadata"]["name"]} is created')
 
         # Step: Update the simulation model from the cluster
-        # Sub-step: Emulate Pods on fake nodes
         self.update_pods_on_fake_nodes()
         for node in self.nodes:
+            # The node model updates the node state from the Kubernetes cluster
             node.update()
 
         # Step: Run the scheduler for decisions
@@ -244,5 +236,6 @@ class Runner():
         #       This does not include cases where workloads are finished and
         #       scheduler needs to optimize the current workloads across nodes
         for step in tqdm(range(self.total_steps), desc="Simulation Steps"):
-            self.step(step)
+            new_workloads = self.dataloader.next()
+            self.step(step, new_workloads)
             time.sleep(1)
