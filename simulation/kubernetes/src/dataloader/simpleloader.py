@@ -19,7 +19,7 @@ class SimpleLoader:
     def __getitem__(self, index):
         return self.workloads[index]
     
-    def next(self):
+    def next(self) -> list:
         next_workload = self.workloads[self.index]
         self.index = (self.index+1) % len(self.workloads)
         return [next_workload]

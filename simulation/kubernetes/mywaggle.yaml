@@ -1,7 +1,8 @@
 #env: waggle
 #workload: bitbrain
 scheduler: WaggleScheduler
-dataloader: SimpleLoader
+dataloader: JobLoader
+# dataloader: SimpleLoader
 steps: 10
 # visualization: WanDB
 visualization: TensorBoard

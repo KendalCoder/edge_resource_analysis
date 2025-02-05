@@ -11,6 +11,10 @@ class WaggleScheduler():
         return (workload, nodes[0])
 
     def step(self, workloads: list, nodes: list):
+        """
+        Returns an ordered list of tuples, each tuple containing a workload and a node.
+        """
+        # TODO: The order should refer to the order in which the workloads are to be scheduled.
         for workload in workloads:
             yield self.schedule(workload, nodes)
 
