@@ -7,6 +7,65 @@ class KubeClient():
         self.v1 = client.CoreV1Api()
         self.logger = logger
 
+    def create_cluster(self, hosts):
+        hosts = self.config.hosts
+        assert isinstance(hosts, list)
+        self.logger.info("Creating nodes...")
+        for host in hosts:
+            template_path = os.path.join(self.current_file_path, f'template/{host.device}.yaml.tmpl')
+            with open(template_path, "r") as file:
+                t = Template(file.read())
+                r = t.substitute({
+                    "NAME": host.name.lower(),
+                })
+            node = yaml.safe_load(r)
+
+            # Adding labels if exists
+            if hasattr(host, "labels"):
+                node_labels = node["metadata"]["labels"]
+                node_labels.update(host.labels.__dict__)
+                node["metadata"]["labels"] = node_labels
+
+            # TODO: If the node exists an error occurs in the Kubernetes client.
+            #       We ignore this for now but may want to update the node if exists.
+            self.kube_client.create_object(node, ignore_error=True)
+
+            device_model = devicemodel.device_to_model_mapping.get(host.device, None)
+            self.nodes.append(device_model(node, self.kube_client))
+            self.logger.info(f'Node {host.name} with the device type {host.device} is created')
+
+    def create_new_workloads(self, workloads):
+        # Sub-step: Create new workloads
+        for pod in self.create_pods(events, steps):
+            self.kube_client.create_object(pod)
+            self.logger.info(f'Pod {pod["metadata"]["name"]} is created')
+
+    def update_resource_use(self, pod, template_path="template/resource.yaml.tmpl"):
+        """
+        Update resource usage for a given pod. Create the usage object if not exists.
+
+        Args:
+            pod (dict): The pod specification.
+            template_path (str): The path to the resource template file.
+        """
+        # Attempt to get the resource first if it exists
+        resource_usage = self.kube_client.get_resourceusage_object(pod.metadata.name)
+        if resource_usage is None:
+            with open(os.path.join(self.current_file_path, template_path), "r") as file:
+                t = Template(file.read())
+                r = t.substitute({
+                    "NAME": pod.metadata.name,
+                    "CPU": pod.spec.containers[0].resources.requests["cpu"],
+                    "MEMORY": pod.spec.containers[0].resources.requests["memory"],
+                })
+            resource_usage = yaml.safe_load(r)
+            self.kube_client.update_resourceusage_object(pod.metadata.name, resource_usage)
+        else:
+            # Update the resource usage
+            resource_usage["spec"]["cpu"] = pod.spec.containers[0].resources.requests["cpu"]
+            resource_usage["spec"]["memory"] = pod.spec.containers[0].resources.requests["memory"]
+            self.kube_client.update_resourceusage_object(pod.metadata.name, resource_usage)
+
     def nodes_available(self):
         ready_nodes = []
         for n in self.v1.list_node().items:
@@ -149,3 +208,13 @@ class KubeClient():
         for pod in self.v1.list_namespaced_pod("default").items:
             self.v1.delete_namespaced_pod(pod.metadata.name, "default")
         return True
+
+    def update(self, step):
+        # TODO: Run update_resource_use() for running Pods in the nodes
+        
+        # for node in self.nodes:
+        #     # TODO: Get information of the node from connected interface
+        #     node_events = self.interface.get_node_info(node.name)
+
+        #     # The node model updates the node state from the Kubernetes cluster
+        #     node.update(node_events)
