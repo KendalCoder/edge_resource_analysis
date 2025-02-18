@@ -28,5 +28,5 @@ class EDFScheduler():
 
   # Checks constraints on the CPU, returning FALSE if
   # adding the job would violate any constraints, TRUE otherwise.
-    def check_constraints(workload, node)
+    def check_constraints(workload, node):
         return (workload.request_cpu < convert_to_millicores(node.status.capacity["cpu"]) - node.metrics["cpu"])

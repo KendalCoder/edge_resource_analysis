@@ -10,7 +10,7 @@ class RandomScheduler():
         return self.name
     
     def schedule(self, workload, nodes: list):
-        return (workload, nodes[random.randint(0,len(nodes)-1])
+        return (workload, nodes[random.randint(0,len(nodes)-1)])
     
     def step(self, workloads: list, nodes: list):
         for workload in workloads:

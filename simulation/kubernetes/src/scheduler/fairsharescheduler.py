@@ -14,7 +14,7 @@ class FairshareScheduler():
     #   And, the virtualized node objects should be updated with the new job placements
     #   within the scheduler's iteration, before submitting the decision to the simulator.
     
-    def schedule((self, tally, workload, nodes: list):
+    def schedule(self, tally, workload, nodes: list):
         # calculate intermediate cpu usage by allocating the jobs to fake nodes
         virtual_nodes = nodes
         for pod, node in tally:
