@@ -16,7 +16,7 @@ class FairshareScheduler():
     
     def schedule(self, tally, workload, nodes: list):
         # calculate intermediate cpu usage by allocating the jobs to fake nodes
-        virtual_nodes = nodes
+        virtual_nodes = nodes.copy()
         for pod, node in tally:
             self.kube_client.placement(pod.metadata.name, node.name)
             node.update()

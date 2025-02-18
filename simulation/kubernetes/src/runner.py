@@ -1,12 +1,14 @@
 import os
-from string import Template
+
 import importlib
 import time
 
-from .kubeclient import KubeClient
+from .cluster.kubeclient import KubeClient
+from .cluster.test_cluster import TestCluster
+
 from .envconfig import EnvConfig
 from .utils import *
-from .devicemodel import devicemodel
+
 
 import yaml
 from tqdm import tqdm
@@ -17,9 +19,13 @@ class Runner():
     """
     def __init__(self, config: dict, logger):
         self.config = EnvConfig(**config)
-        self.kube_client = KubeClient(logger)
         self.logger = logger
         self.total_steps = config.get("steps", 20)
+        
+        # Choose a cluster
+        self.cluster = TestCluster(logger)
+        # self.cluster = KubeClient(logger)
+        
         self.nodes = []
         self.current_file_path = os.path.dirname(os.path.abspath(__file__))
 
@@ -112,39 +118,6 @@ class Runner():
             pod = yaml.safe_load(r)
             yield pod
 
-    def update_resource_use(self, pod, template_path="template/resource.yaml.tmpl"):
-        """
-        Update resource usage for a given pod. Create the usage object if not exists.
-
-        Args:
-            pod (dict): The pod specification.
-            template_path (str): The path to the resource template file.
-        """
-        # Attempt to get the resource first if it exists
-        resource_usage = self.kube_client.get_resourceusage_object(pod.metadata.name)
-        if resource_usage is None:
-            with open(os.path.join(self.current_file_path, template_path), "r") as file:
-                t = Template(file.read())
-                r = t.substitute({
-                    "NAME": pod.metadata.name,
-                    "CPU": pod.spec.containers[0].resources.requests["cpu"],
-                    "MEMORY": pod.spec.containers[0].resources.requests["memory"],
-                })
-            resource_usage = yaml.safe_load(r)
-            self.kube_client.update_resourceusage_object(pod.metadata.name, resource_usage)
-        else:
-            # Update the resource usage
-            resource_usage["spec"]["cpu"] = pod.spec.containers[0].resources.requests["cpu"]
-            resource_usage["spec"]["memory"] = pod.spec.containers[0].resources.requests["memory"]
-            self.kube_client.update_resourceusage_object(pod.metadata.name, resource_usage)
-
-    def update_pods_on_fake_nodes(self):
-        fake_nodes = list(self.kube_client.get_fake_nodes())
-        for node in fake_nodes:
-            pods = self.kube_client.v1.list_namespaced_pod("default", field_selector=f"spec.nodeName={node.metadata.name}")
-            for pod in pods.items:
-                self.update_resource_use(pod)
-
     def aggregate_metrics(self):
         """
         Aggregate metrics from the simuation.
@@ -171,6 +144,10 @@ class Runner():
         for node in self.nodes:
             for metric_name, metric_value in node.get_node_metrics():
                 metrics[f"node_{node}_{metric_name}"] = metric_value
+
+        metrics = metrics.update({
+            "cluster_pending_workloads": len(self.cluster.pending_pods),
+        })
         return metrics
 
     def calculate_scores(self):
@@ -178,13 +155,13 @@ class Runner():
         Calculate scores for the simulation.
         """
         scores = {}
-        nodes = self.kube_client.nodes_available()
-        pods = self.kube_client.v1.list_namespaced_pod("default").items
+        # nodes = self.kube_client.nodes_available()
+        # pods = self.kube_client.v1.list_namespaced_pod("default").items
 
-        # TODO: We need to implement a scoring mechanism for the simulation.
-        #       Scores may include node power consumption, fairness, and other metrics.
-        running_pods = [pod for pod in pods if pod.status.phase == "Running"]
-        pending_pods = [pod for pod in pods if pod.status.phase == "Pending"]
+        # # TODO: We need to implement a scoring mechanism for the simulation.
+        # #       Scores may include node power consumption, fairness, and other metrics.
+        # running_pods = [pod for pod in pods if pod.status.phase == "Running"]
+        # pending_pods = [pod for pod in pods if pod.status.phase == "Pending"]
 
         scores.update({
             "score_running_pods": len(running_pods),
@@ -197,30 +174,25 @@ class Runner():
         # })
 
         # Adding scheduler scores
-        for k, v in self.scheduler.evaluate(pods, nodes):
+        for k, v in self.scheduler.evaluate(self.cluster):
             scores[f"score_scheduler_{k}"] = v
         return scores
 
     def step(self, steps, events=[]):
         # Step: Apply events to the Kubernetes cluster
-        # Sub-step: Create new workloads
-        for pod in self.create_pods(events, steps):
-            self.kube_client.create_object(pod)
-            self.logger.info(f'Pod {pod["metadata"]["name"]} is created')
+        # TODO: Create new workloads
+        self.cluster.create_new_workloads(events)
 
         # Step: Update the simulation model from the cluster
-        self.update_pods_on_fake_nodes()
-        for node in self.nodes:
-            # The node model updates the node state from the Kubernetes cluster
-            node.update()
+        self.cluster.update(step=steps)
 
         # Step: Run the scheduler for decisions
-        pending_workloads = self.kube_client.v1.list_namespaced_pod("default", field_selector="status.phase=Pending").items
-        decisions = self.scheduler.step(pending_workloads, self.nodes)
+        pending_workloads = self.cluster.pending_pods
+        decisions = self.scheduler.step(pending_workloads, self.cluster)
 
         # Step: Apply decisions in the cluster
         for pod, node in decisions:
-            self.kube_client.placement(pod.metadata.name, node.name)
+            self.cluster.placement(pod.metadata.name, node.name, steps)
 
         # NOTE: Kubernetes metrics server needs some time to update performance metrics
         #       We wait for some time before we can get the updated metrics.
@@ -231,11 +203,11 @@ class Runner():
         # Step: Publish metrics and scores
         metrics = self.aggregate_metrics()
         self.visualization.log_metrics(metrics, step=steps)
-        scores = self.calculate_scores()
-        self.visualization.log_metrics(scores, step=steps)
+        # scores = self.calculate_scores()
+        # self.visualization.log_metrics(scores, step=steps)
 
     def run(self):
-        self.create_cluster()
+        self.cluster.create_cluster(self.config.hosts)
 
         # TODO: Simulation runs based on workload creation.
         #       This does not include cases where workloads are finished and

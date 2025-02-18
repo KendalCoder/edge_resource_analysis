@@ -18,7 +18,6 @@ spec:
   - key: "kwok.x-k8s.io/node"
     operator: "Exists"
     effect: "NoSchedule"
-  schedulerName: $SCHEDULER
   containers:
   - name: fake-container
     image: fake-image
