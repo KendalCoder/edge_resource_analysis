@@ -10,6 +10,10 @@ class FairshareScheduler():
     def __str__(self):
         return self.name
     
+    # TODO: Virtualized node objects representing the current status of the nodes.
+    #   And, the virtualized node objects should be updated with the new job placements
+    #   within the scheduler's iteration, before submitting the decision to the simulator.
+    
     def schedule((self, tally, workload, nodes: list):
         # calculate intermediate cpu usage by allocating the jobs to fake nodes
         virtual_nodes = nodes

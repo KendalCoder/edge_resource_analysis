@@ -188,8 +188,13 @@ class Runner():
 
         scores.update({
             "score_running_pods": len(running_pods),
-            "score_pending_pods": len(pending_pods),
+            "score_pending_pods": len(pending_pods), # Backlog
         })
+
+        # TODO: Think about this metric as it give you the percentage of the pods that are in the data production phase.
+        # scores.update({
+        #     "qos_in_data_production": sum(len(running_pods) / sum(len(running_pods) + len(pending_pods))),
+        # })
 
         # Adding scheduler scores
         for k, v in self.scheduler.evaluate(pods, nodes):
