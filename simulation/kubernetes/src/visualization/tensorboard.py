@@ -1,36 +1,29 @@
-import tensorflow as tf
+import tensorboardX as tb
+from datetime import datetime
 
 class TensorBoard:
     def __init__(self, log_dir='logs'):
         self.log_dir = log_dir
-        self.writer = tf.summary.create_file_writer(log_dir)
+        current_time = datetime.now().strftime('%Y%m%d-%H%M%S')
+        log_dir_with_timestamp = f"{self.log_dir}/{current_time}"
+        self.writer = tb.SummaryWriter(log_dir_with_timestamp)
 
     def finish(self):
         # No need to close the writer
         pass
 
     def log_metrics(self, metrics, step):
-        with self.writer.as_default():
-            for key, value in metrics.items():
-                tf.summary.scalar(key, value, step=step)
-            self.writer.flush()
+        for key, value in metrics.items():
+            self.writer.add_scalar(key, value, step)
 
     def log_scalar(self, tag, value, step):
-        with self.writer.as_default():
-            tf.summary.scalar(tag, value, step=step)
-            self.writer.flush()
+        self.writer.add_scalar(tag, value, step)
 
     def log_histogram(self, tag, values, step):
-        with self.writer.as_default():
-            tf.summary.histogram(tag, values, step=step)
-            self.writer.flush()
+        self.writer.add_histogram(tag, values, step)
 
     def log_image(self, tag, image, step):
-        with self.writer.as_default():
-            tf.summary.image(tag, image, step=step)
-            self.writer.flush()
+        self.writer.add_image(tag, image, step)
 
     def log_text(self, tag, text, step):
-        with self.writer.as_default():
-            tf.summary.text(tag, text, step=step)
-            self.writer.flush()
+        self.writer.add_text(tag, text, step)

@@ -2,4 +2,4 @@ click
 kubernetes
 wandb
 tqdm
-tensorflow
+tensorboardX

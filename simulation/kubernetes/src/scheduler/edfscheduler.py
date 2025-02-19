@@ -15,6 +15,9 @@ class EDFScheduler():
             if validjob:
                 return (workload, node)
 
+    # TODO: Rename runtime to deadline
+    # TODO: Pass the resources including cpu and memory to the nodes object
+    #  so that the scheduler can check the constraints before assigning the job to the node.
     def step(self, workloads: list, nodes: list):
         sorted_workloads = sorted(workloads, key=lambda job: job.runtime)
         for workload in sorted_workloads:
@@ -25,5 +28,5 @@ class EDFScheduler():
 
   # Checks constraints on the CPU, returning FALSE if
   # adding the job would violate any constraints, TRUE otherwise.
-    def check_constraints(workload, node)
+    def check_constraints(workload, node):
         return (workload.request_cpu < convert_to_millicores(node.status.capacity["cpu"]) - node.metrics["cpu"])
