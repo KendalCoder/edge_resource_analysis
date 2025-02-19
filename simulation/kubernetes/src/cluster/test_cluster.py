@@ -9,8 +9,9 @@ class TestCluster:
         self.logger = logger
         self.current_file_path = os.path.dirname(os.path.abspath(__file__))
 
-        self.nodes = {}
-        self.pending_pods = {}
+        self.nodes = []
+        self.pending_pods = []
+        self.workloads_total = 0
 
     def create_cluster(self, hosts):
         assert isinstance(hosts, list)
@@ -26,7 +27,7 @@ class TestCluster:
 
             device_model_func = devicemodel.device_to_model_mapping.get(host.device, None)
             node = device_model_func(node_template)
-            self.nodes[node.name] = node
+            self.nodes.append(node)
             self.logger.info(f'Node {host.name} with the device type {host.device} is created')
 
     def create_new_workloads(self, workloads):
@@ -36,21 +37,25 @@ class TestCluster:
             #   this is only for Kubernetes cluster
             pod_template["spec"]["schedulerName"] = "myscheduler"
             pod = SimpleWorkload(pod_template)
-            self.pending_pods[pod.name] = pod
+            self.pending_pods.append(pod)
             self.logger.info(f'Pod {pod_template["metadata"]["name"]} is created')
+        self.workloads_total += len(workloads)
 
     def update(self, step):
-        for node_name in self.nodes.keys():
-            node = self.nodes.get(node_name)
-            finished_pods = node.update(step, step, events=[])
-            self.nodes[node_name] = node
+        for node in self.nodes:
+            finished_pods = node.update(step, events=[])
             for p in finished_pods:
                 self.logger.info(f'{p.name} is finished')
     
     def placement(self, pod_name, node_name, step):
-        pod = self.pending_pods.pop(pod_name, None)
+        pod = next((p for p in self.pending_pods if p.name == pod_name), None)
+        if pod:
+            self.pending_pods.remove(pod)
         assert pod is not None
-        node = self.nodes.get(node_name)
+        node = next((n for n in self.nodes if n.name == node_name), None)
+        assert node is not None
         node.place_pod(pod, step)
-        self.nodes[node_name] = node
         self.logger.info(f'{pod.name} is placed on {node.name}')
+
+    def cleanup(self):
+        pass

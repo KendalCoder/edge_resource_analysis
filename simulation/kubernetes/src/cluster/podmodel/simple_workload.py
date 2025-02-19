@@ -10,8 +10,8 @@ class SimpleWorkload:
         self.deadline = 5
         self.ended = 0
 
-        self.request_cpu = convert_to_millicores(pod_template.spec.containers[0].resources.requests["cpu"])
-        self.request_memory = convert_to_bytes(pod_template.spec.containers[0].resources.requests["memory"])
+        self.request_cpu = convert_to_millicores(pod_template["spec"]["containers"][0]["resources"]["requests"]["cpu"])
+        self.request_memory = convert_to_bytes(pod_template["spec"]["containers"][0]["resources"]["requests"]["memory"])
 
     def start_at(self, step):
         self.started = step

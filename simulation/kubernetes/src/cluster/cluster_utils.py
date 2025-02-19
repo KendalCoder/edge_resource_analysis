@@ -25,7 +25,7 @@ def create_pod(workload: dict):
         "REQUEST_MEMORY": "1Mi",
     }
     default.update(workload)
-    with open(template_path, "r") as file:
+    with open(workload_template_path, "r") as file:
         t = Template(file.read())
         r = t.substitute(default)
     return yaml.safe_load(r)
@@ -45,6 +45,8 @@ def convert_to_millicores(value):
     """
     Convert a value to millicores.
     """
+    if isinstance(value, int):
+        return int(value) * 1000
     if value[-1] == 'm':
         return int(value[:-1])
     elif value[-1] == 'n':

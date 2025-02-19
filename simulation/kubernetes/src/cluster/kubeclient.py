@@ -40,6 +40,25 @@ class KubeClient():
             self.kube_client.create_object(pod)
             self.logger.info(f'Pod {pod["metadata"]["name"]} is created')
 
+    
+    def create_pods(self, workloads: dict, steps: int):
+        template_path = os.path.join(self.current_file_path, "template/pod.yaml.tmpl")
+        default = {
+            "NAME": "mypod",
+            "REQUEST_CPU": "100m",
+            "REQUEST_MEMORY": "1Mi",
+            "SCHEDULER": self.scheduler
+        }
+        for workload in workloads:
+            d = default.copy()
+            d.update(workload)
+            d["NAME"] = f"{d['NAME']}-{steps}"
+            with open(template_path, "r") as file:
+                t = Template(file.read())
+                r = t.substitute(d)
+            pod = yaml.safe_load(r)
+            yield pod
+
     def update_resource_use(self, pod, template_path="template/resource.yaml.tmpl"):
         """
         Update resource usage for a given pod. Create the usage object if not exists.
@@ -204,7 +223,7 @@ class KubeClient():
             pass
         return True
     
-    def delete_pods(self):
+    def cleanup(self):
         for pod in self.v1.list_namespaced_pod("default").items:
             self.v1.delete_namespaced_pod(pod.metadata.name, "default")
         return True
@@ -218,3 +237,4 @@ class KubeClient():
 
         #     # The node model updates the node state from the Kubernetes cluster
         #     node.update(node_events)
+        pass

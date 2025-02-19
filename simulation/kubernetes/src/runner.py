@@ -7,7 +7,6 @@ from .cluster.kubeclient import KubeClient
 from .cluster.test_cluster import TestCluster
 
 from .envconfig import EnvConfig
-from .utils import *
 
 
 import yaml
@@ -26,7 +25,6 @@ class Runner():
         self.cluster = TestCluster(logger)
         # self.cluster = KubeClient(logger)
         
-        self.nodes = []
         self.current_file_path = os.path.dirname(os.path.abspath(__file__))
 
         # Module loading fails without adding the src directory to the path
@@ -69,54 +67,9 @@ class Runner():
     def __exit__(self, exc_type, exc_value, traceback):
         self.cleanup()
 
-    def create_cluster(self):
-        hosts = self.config.hosts
-        assert isinstance(hosts, list)
-        self.logger.info("Creating nodes...")
-        for host in hosts:
-            template_path = os.path.join(self.current_file_path, f'template/{host.device}.yaml.tmpl')
-            with open(template_path, "r") as file:
-                t = Template(file.read())
-                r = t.substitute({
-                    "NAME": host.name.lower(),
-                })
-            node = yaml.safe_load(r)
-
-            # Adding labels if exists
-            if hasattr(host, "labels"):
-                node_labels = node["metadata"]["labels"]
-                node_labels.update(host.labels.__dict__)
-                node["metadata"]["labels"] = node_labels
-
-            # TODO: If the node exists an error occurs in the Kubernetes client.
-            #       We ignore this for now but may want to update the node if exists.
-            self.kube_client.create_object(node, ignore_error=True)
-
-            device_model = devicemodel.device_to_model_mapping.get(host.device, None)
-            self.nodes.append(device_model(node, self.kube_client))
-            self.logger.info(f'Node {host.name} with the device type {host.device} is created')
-
     def cleanup(self):
-        self.kube_client.delete_pods()
+        self.cluster.cleanup()
         self.visualization.finish()
-
-    def create_pods(self, workloads: dict, steps: int):
-        template_path = os.path.join(self.current_file_path, "template/pod.yaml.tmpl")
-        default = {
-            "NAME": "mypod",
-            "REQUEST_CPU": "100m",
-            "REQUEST_MEMORY": "1Mi",
-            "SCHEDULER": self.scheduler
-        }
-        for workload in workloads:
-            d = default.copy()
-            d.update(workload)
-            d["NAME"] = f"{d['NAME']}-{steps}"
-            with open(template_path, "r") as file:
-                t = Template(file.read())
-                r = t.substitute(d)
-            pod = yaml.safe_load(r)
-            yield pod
 
     def aggregate_metrics(self):
         """
@@ -141,12 +94,16 @@ class Runner():
         #     })
 
         # Add node metrics from the device model
-        for node in self.nodes:
+        # for node in self.nodes:
+        #     for metric_name, metric_value in node.get_node_metrics():
+        #         metrics[f"node_{node}_{metric_name}"] = metric_value
+        for node in self.cluster.nodes:
             for metric_name, metric_value in node.get_node_metrics():
-                metrics[f"node_{node}_{metric_name}"] = metric_value
+                metrics[f"node_{node.name}_{metric_name}"] = metric_value
 
-        metrics = metrics.update({
+        metrics.update({
             "cluster_pending_workloads": len(self.cluster.pending_pods),
+            "cluster_total_workloads": self.cluster.workloads_total,
         })
         return metrics
 
@@ -163,10 +120,10 @@ class Runner():
         # running_pods = [pod for pod in pods if pod.status.phase == "Running"]
         # pending_pods = [pod for pod in pods if pod.status.phase == "Pending"]
 
-        scores.update({
-            "score_running_pods": len(running_pods),
-            "score_pending_pods": len(pending_pods), # Backlog
-        })
+        # scores.update({
+        #     "score_running_pods": len(running_pods),
+        #     "score_pending_pods": len(pending_pods), # Backlog
+        # })
 
         # TODO: Think about this metric as it give you the percentage of the pods that are in the data production phase.
         # scores.update({
@@ -192,7 +149,7 @@ class Runner():
 
         # Step: Apply decisions in the cluster
         for pod, node in decisions:
-            self.cluster.placement(pod.metadata.name, node.name, steps)
+            self.cluster.placement(pod.name, node.name, steps)
 
         # NOTE: Kubernetes metrics server needs some time to update performance metrics
         #       We wait for some time before we can get the updated metrics.

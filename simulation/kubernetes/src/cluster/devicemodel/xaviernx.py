@@ -28,10 +28,11 @@ class XavierNX:
 		return alpha * right + (1 - alpha) * left
 	
 	def get_node_metrics(self):
-		return self.metrics.update({
-			"finished_workloads", self.count_finished_pod,
-			"running_workloads", len(self.pods),
-		}).items()
+		self.metrics.update({
+			"finished_workloads": self.count_finished_pod,
+			"running_workloads": len(self.pods.keys()),
+		})
+		return self.metrics.items()
 	
 	def place_pod(self, pod, step):
 		pod.start_at(step)
@@ -42,8 +43,8 @@ class XavierNX:
 		# Cumulated CPU and memory usage of all pods running on this node.
 		cumulated_cpu = 0
 		cumulated_memory = 0
-		for pod_name in self.pods.keys():
-			pod = self.pods.pop(pod)
+		for pod_name in list(self.pods.keys()):
+			pod = self.pods.pop(pod_name)
 			cumulated_cpu += pod.request_cpu
 			cumulated_memory += pod.request_memory
 
