@@ -172,4 +172,4 @@ class Runner():
         for step in tqdm(range(self.total_steps), desc="Simulation Steps"):
             new_workloads = self.dataloader.next()
             self.step(step, new_workloads)
-            time.sleep(1)
+            # time.sleep(1)
