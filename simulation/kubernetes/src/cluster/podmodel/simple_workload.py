@@ -3,6 +3,7 @@ from ..cluster_utils import convert_to_millicores, convert_to_bytes
 class SimpleWorkload:
     def __init__(self, pod_template: dict):
         self.name = pod_template["metadata"]["name"]
+        self.labels = pod_template["metadata"]["labels"]
         self.state = "Pending"
         self.associated_node_name = ""
         self.started = 0

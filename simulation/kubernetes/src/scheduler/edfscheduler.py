@@ -1,32 +1,24 @@
-# from ..powermodels.xaviernx import PMXavierNX
-import random
-# Assigns jobs to a random node, irrespective of its load
-class EDFScheduler():
+from .scheduler import Scheduler
+
+class EDFScheduler(Scheduler):
     def __init__(self):
         self.name = "edf-scheduler"
-
-    def __str__(self):
-        return self.name
     
     def schedule(self, workload, nodes: list):
-        validjob = false
+        # TODO: Checks constraints on the CPU, returning FALSE if
+        #   adding the job would violate any constraints, TRUE otherwise.
         for node in nodes:
-            validjob = validjob or check_constraints(workload,node)
-            if validjob:
+            if node.is_workload_fit(workload):
                 return (workload, node)
+        return None
 
-    # TODO: Rename runtime to deadline
-    # TODO: Pass the resources including cpu and memory to the nodes object
-    #  so that the scheduler can check the constraints before assigning the job to the node.
-    def step(self, workloads: list, nodes: list):
-        sorted_workloads = sorted(workloads, key=lambda job: job.runtime)
+    def step(self, workloads: list, cluster):
+        decisions = []
+        # Ascending sort by deadline
+        sorted_workloads = sorted(workloads, key=lambda job: job.deadline)
         for workload in sorted_workloads:
-            yield self.schedule(workload, nodes)
-
-    def evaluate(self, workloads: list, nodes: list):
-        return {}
-
-  # Checks constraints on the CPU, returning FALSE if
-  # adding the job would violate any constraints, TRUE otherwise.
-    def check_constraints(workload, node):
-        return (workload.request_cpu < convert_to_millicores(node.status.capacity["cpu"]) - node.metrics["cpu"])
+            decision = self.schedule(workload, cluster.nodes)
+            if decision is None:
+                continue
+            decisions.append(decision)
+        return decisions

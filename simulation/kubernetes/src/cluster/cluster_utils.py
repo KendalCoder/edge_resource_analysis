@@ -18,17 +18,27 @@ def create_node(name: str, device: str):
 
 
 def create_pod(workload: dict):
+    # Copy the workload to avoid modifying the original workload
+    _workload = workload.copy()
+    labels = _workload.pop("LABELS", {})
+
     workload_template_path = template_path / "pod.yaml.tmpl"
     default = {
         "NAME": "mypod",
         "REQUEST_CPU": "100m",
         "REQUEST_MEMORY": "1Mi",
     }
-    default.update(workload)
+    default.update(_workload)
     with open(workload_template_path, "r") as file:
         t = Template(file.read())
         r = t.substitute(default)
-    return yaml.safe_load(r)
+    pod = yaml.safe_load(r)
+
+    # Add any additional labels
+    existing_labels = pod["metadata"].get("labels", {})
+    existing_labels.update(labels)
+    pod["metadata"]["labels"] = existing_labels
+    return pod
 
 def convert_to_bytes(value):
     """
