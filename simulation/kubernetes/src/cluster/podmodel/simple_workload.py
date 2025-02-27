@@ -19,7 +19,7 @@ class SimpleWorkload:
         # TODO: We finish the workload in 3 iterations.
         #   We will need to calculate the required steps based on
         #   how much resource the workload gets in each iteration.
-        self.ended = step + 3
+        self.ended = step + 1
 
     def compute(self):
         """

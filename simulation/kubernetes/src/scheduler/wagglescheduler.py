@@ -16,16 +16,23 @@ class WaggleScheduler(Scheduler):
     
     def schedule(self, workload, nodes):
         is_gpu_required = workload.labels.get("resource.gpu", False)
+        scores = []
         for node in nodes.values():
             # If the workload does not require GPU we schedule it
             # based on the CPU and memory availability.
             if not is_gpu_required:
                 if node.is_workload_fit(workload):
-                    return workload, node
+                    scores.append((node.get_resource_score(), node))
             # If the workload requires GPU, we schedule it based on the GPU availability.
             elif self.is_node_gpu_available(node) and node.is_workload_fit(workload):
-                return workload, node
-        return None
+                scores.append((node.get_resource_score(), node))
+        
+        # No available node for the workload
+        if len(scores) == 0:
+            return None
+        else:
+            scores.sort(key=lambda x: x[0])
+            return (workload, scores[0][1])
 
     def step(self, workloads: list, cluster):
         """

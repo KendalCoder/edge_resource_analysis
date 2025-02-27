@@ -101,8 +101,8 @@ class Runner():
             for metric_name, metric_value in node.get_node_metrics():
                 metrics[f"node_{node.name}_{metric_name}"] = metric_value
 
-        total_running_workloads = self.cluster.workloads_total - len(self.cluster.pending_pods)
-        qos_in_data_production = total_running_workloads / (total_running_workloads + len(self.cluster.pending_pods))
+        # total_running_workloads = self.cluster.workloads_total - len(self.cluster.pending_pods)
+        qos_in_data_production = self.cluster.workloads_total / (self.cluster.workloads_total + len(self.cluster.pending_pods))
         metrics.update({
             "cluster_pending_workloads": len(self.cluster.pending_pods),
             "cluster_total_workloads": self.cluster.workloads_total,
@@ -131,9 +131,6 @@ class Runner():
         # TODO: Create new workloads
         self.cluster.create_new_workloads(events, step=steps)
 
-        # Step: Update the simulation model from the cluster
-        self.cluster.update(step=steps)
-
         # Step: Run the scheduler for decisions
         pending_workloads = self.cluster.pending_pods.values()
         decisions = self.scheduler.step(pending_workloads, self.cluster)
@@ -141,6 +138,9 @@ class Runner():
         # Step: Apply decisions in the cluster
         for pod, node in decisions:
             self.cluster.placement(pod.name, node.name, steps)
+
+        # Step: Update the simulation model from the cluster
+        self.cluster.update(step=steps)
 
         # NOTE: Kubernetes metrics server needs some time to update performance metrics
         #       We wait for some time before we can get the updated metrics.

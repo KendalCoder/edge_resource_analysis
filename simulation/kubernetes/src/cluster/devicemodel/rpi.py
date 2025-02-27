@@ -4,7 +4,7 @@ import numpy as np
 
 from ..cluster_utils import convert_to_millicores, convert_to_bytes
 
-class XavierNX:
+class RaspberryPi:
 	def __init__(self, node_template):
 		self.name = node_template["metadata"]["name"]
 		self.labels = node_template["metadata"]["labels"]

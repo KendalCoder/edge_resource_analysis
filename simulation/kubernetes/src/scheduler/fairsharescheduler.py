@@ -18,7 +18,7 @@ class FairshareScheduler(Scheduler):
         tally = []
         virtual_nodes = cluster.nodes.copy()
         for workload in workloads:
-            planned_schedule = self.schedule(tally, workload, virtual_nodes)
+            planned_schedule = self.schedule(tally, workload, list(virtual_nodes.values()))
             # If the workload cannot be scheduled, skip it
             if planned_schedule is None:
                 continue
