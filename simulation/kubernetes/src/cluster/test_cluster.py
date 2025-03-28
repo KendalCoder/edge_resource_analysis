@@ -38,6 +38,11 @@ class TestCluster:
             #   this is only for Kubernetes cluster
             pod_template["spec"]["schedulerName"] = "myscheduler"
             pod = SimpleWorkload(pod_template)
+
+            # Set deadline
+            if hasattr(workload, "deadline"):
+                pod.deadline = step + workload.deadline
+
             # Pod name should be unique
             pod.name = f'{pod.name}-{step}'
             self.pending_pods[pod.name] = pod

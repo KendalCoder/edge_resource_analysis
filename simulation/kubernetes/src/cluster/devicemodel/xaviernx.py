@@ -107,6 +107,7 @@ class XavierNX:
 		finished_pods = []
 		for pod_name in list(self.pods.keys()):
 			pod = self.pods.pop(pod_name)
+			pod.compute()
 
 			if pod.ended <= step:
 				finished_pods.append(pod)
