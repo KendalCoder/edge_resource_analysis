@@ -1,35 +1,31 @@
-# from ..powermodels.xaviernx import PMXavierNX
+from .scheduler import Scheduler
 
 # Assigns jobs to a random node, irrespective of its load
-class FairshareScheduler():
+class FairshareScheduler(Scheduler):
     def __init__(self):
         self.name = "fairshare-scheduler"
-        # Quick and dirty way to be able to predict updated node cpu usage (see below)
-        self.kube_client = KubeClient(logger)
-
-    def __str__(self):
-        return self.name
-    
-    # TODO: Virtualized node objects representing the current status of the nodes.
-    #   And, the virtualized node objects should be updated with the new job placements
-    #   within the scheduler's iteration, before submitting the decision to the simulator.
     
     def schedule(self, tally, workload, nodes: list):
-        # calculate intermediate cpu usage by allocating the jobs to fake nodes
-        virtual_nodes = nodes.copy()
-        for pod, node in tally:
-            self.kube_client.placement(pod.metadata.name, node.name)
-            node.update()
-
         # find the least busy node and assign it the job
-        memory_usage = [node.metrics["cpu"] for node in virtual_nodes]
-        minindex = memory_usage.index(min(memory_usage))
-        return (workload, nodes[minindex])
+        cpu_usage = [node.metrics["cpu"] for node in nodes]
+        minindex = cpu_usage.index(min(cpu_usage))
+        if nodes[minindex].is_workload_fit(workload):
+            return (workload, nodes[minindex])
+        else:
+            return None
 
-    def step(self, workloads: list, nodes: list):
+    def step(self, workloads: list, cluster):
         tally = []
+        virtual_nodes = cluster.nodes.copy()
         for workload in workloads:
-            planned_schedule = self.schedule(tally, workload, nodes)
+            planned_schedule = self.schedule(tally, workload, list(virtual_nodes.values()))
+            # If the workload cannot be scheduled, skip it
+            if planned_schedule is None:
+                continue
+
+            # Update the virtual node with the new job placement
+            _, virtual_node = planned_schedule
+            virtual_node.place_pod(workload, cluster.current_step)
+
             tally.append(planned_schedule)
-            yield planned_schedule
-            
+        return tally

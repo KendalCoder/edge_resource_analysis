@@ -1,29 +1,30 @@
 #env: waggle
 #workload: bitbrain
 scheduler: WaggleScheduler
+# scheduler: FairshareScheduler
 dataloader: JobLoader
 # dataloader: SimpleLoader
-steps: 10
+steps: 50
 # visualization: WanDB
 visualization: TensorBoard
 hosts:
-- name: T001
+- name: T001-nxcore
   device: xaviernx
   labels:
     waggle.io/type: wsn
     waggle.io/group: chicago
-- name: T002
-  device: xaviernx
-  labels:
-    waggle.io/type: wsn
-    waggle.io/group: nu
-- name: T003
+# - name: T001-rpi
+#   device: rpi
+#   labels:
+#     waggle.io/type: wsn
+#     waggle.io/group: chicago
+- name: T002-nxcore
   device: xaviernx
   labels:
     waggle.io/type: wsn
     waggle.io/group: chicago
-- name: T004
-  device: xaviernx
-  labels:
-    waggle.io/type: wsn
-    waggle.io/group: nu
+# - name: T003-nxcore
+#   device: xaviernx
+#   labels:
+#     waggle.io/type: wsn
+#     waggle.io/group: chicago

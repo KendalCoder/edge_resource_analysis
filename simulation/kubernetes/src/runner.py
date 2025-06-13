@@ -97,13 +97,16 @@ class Runner():
         # for node in self.nodes:
         #     for metric_name, metric_value in node.get_node_metrics():
         #         metrics[f"node_{node}_{metric_name}"] = metric_value
-        for node in self.cluster.nodes:
+        for node in self.cluster.nodes.values():
             for metric_name, metric_value in node.get_node_metrics():
                 metrics[f"node_{node.name}_{metric_name}"] = metric_value
 
+        # total_running_workloads = self.cluster.workloads_total - len(self.cluster.pending_pods)
+        qos_in_data_production = self.cluster.workloads_total / (self.cluster.workloads_total + len(self.cluster.pending_pods))
         metrics.update({
             "cluster_pending_workloads": len(self.cluster.pending_pods),
             "cluster_total_workloads": self.cluster.workloads_total,
+            "cluster_qos_data_production": qos_in_data_production,
         })
         return metrics
 
@@ -112,23 +115,10 @@ class Runner():
         Calculate scores for the simulation.
         """
         scores = {}
-        # nodes = self.kube_client.nodes_available()
-        # pods = self.kube_client.v1.list_namespaced_pod("default").items
-
         # # TODO: We need to implement a scoring mechanism for the simulation.
         # #       Scores may include node power consumption, fairness, and other metrics.
         # running_pods = [pod for pod in pods if pod.status.phase == "Running"]
         # pending_pods = [pod for pod in pods if pod.status.phase == "Pending"]
-
-        # scores.update({
-        #     "score_running_pods": len(running_pods),
-        #     "score_pending_pods": len(pending_pods), # Backlog
-        # })
-
-        # TODO: Think about this metric as it give you the percentage of the pods that are in the data production phase.
-        # scores.update({
-        #     "qos_in_data_production": sum(len(running_pods) / sum(len(running_pods) + len(pending_pods))),
-        # })
 
         # Adding scheduler scores
         for k, v in self.scheduler.evaluate(self.cluster):
@@ -136,20 +126,21 @@ class Runner():
         return scores
 
     def step(self, steps, events=[]):
+        self.logger.info(f"Step: {steps}")
         # Step: Apply events to the Kubernetes cluster
         # TODO: Create new workloads
-        self.cluster.create_new_workloads(events)
-
-        # Step: Update the simulation model from the cluster
-        self.cluster.update(step=steps)
+        self.cluster.create_new_workloads(events, step=steps)
 
         # Step: Run the scheduler for decisions
-        pending_workloads = self.cluster.pending_pods
+        pending_workloads = self.cluster.pending_pods.values()
         decisions = self.scheduler.step(pending_workloads, self.cluster)
 
         # Step: Apply decisions in the cluster
         for pod, node in decisions:
             self.cluster.placement(pod.name, node.name, steps)
+
+        # Step: Update the simulation model from the cluster
+        self.cluster.update(step=steps)
 
         # NOTE: Kubernetes metrics server needs some time to update performance metrics
         #       We wait for some time before we can get the updated metrics.

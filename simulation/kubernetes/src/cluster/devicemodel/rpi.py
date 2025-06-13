@@ -4,7 +4,7 @@ import numpy as np
 
 from ..cluster_utils import convert_to_millicores, convert_to_bytes
 
-class XavierNX:
+class RaspberryPi:
 	def __init__(self, node_template):
 		self.name = node_template["metadata"]["name"]
 		self.labels = node_template["metadata"]["labels"]
@@ -107,7 +107,6 @@ class XavierNX:
 		finished_pods = []
 		for pod_name in list(self.pods.keys()):
 			pod = self.pods.pop(pod_name)
-			pod.compute()
 
 			if pod.ended <= step:
 				finished_pods.append(pod)

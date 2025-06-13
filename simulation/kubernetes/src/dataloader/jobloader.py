@@ -24,11 +24,13 @@ scienceRules:
             "NAME": "cloudcover",
             "REQUEST_CPU": "1500m",
             "REQUEST_MEMORY": "2500Mi",
+            "LABELS": {"resource.gpu": "true"},
         }
         objectcounter = {
             "NAME": "objectcounter",
             "REQUEST_CPU": "2000m",
             "REQUEST_MEMORY": "3Gi",
+            "LABELS": {"resource.gpu": "true"},
         }
         motiondetection = {
             "NAME": "motiondetection",

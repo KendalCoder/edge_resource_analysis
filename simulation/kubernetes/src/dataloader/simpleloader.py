@@ -10,6 +10,7 @@ class SimpleLoader:
                 "NAME": "object-counter",
                 "REQUEST_CPU": "2000m",
                 "REQUEST_MEMORY": "3Gi",
+                "LABELS": {"resource.gpu": "true"},
             },
         ])
 
