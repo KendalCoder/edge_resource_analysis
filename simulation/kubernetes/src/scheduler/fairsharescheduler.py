@@ -1,4 +1,4 @@
-from scheduler import Scheduler
+from .scheduler import Scheduler
 
 # Assigns jobs to a random node, irrespective of its load
 class FairshareScheduler(Scheduler):
