@@ -7,7 +7,7 @@ class FairshareScheduler(Scheduler):
     
     def schedule(self, tally, workload, nodes: list):
         # find the least busy node and assign it the job
-        cpu_usage = [node.metrics["cpu"] for node in nodes]
+        cpu_usage = [node.metrics.get("cpu", float("inf")) for node in nodes]
         minindex = cpu_usage.index(min(cpu_usage))
         if nodes[minindex].is_workload_fit(workload):
             return (workload, nodes[minindex])
