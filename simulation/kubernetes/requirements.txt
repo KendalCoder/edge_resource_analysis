@@ -3,3 +3,4 @@ kubernetes
 wandb
 tqdm
 tensorboardX
+tensorboard
