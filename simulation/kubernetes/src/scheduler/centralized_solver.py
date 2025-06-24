@@ -3,12 +3,11 @@ import numpy as np
 
 class centralized_solver()
 
-  #The stopping condition for the algorithm (e.g., subsequent iterations varying below a set tolerance)
+# The stopping condition for the algorithm (e.g., subsequent iterations varying below a set tolerance)
   def stopcondition()
     return true
 
-
-  #The dual descent algorithm
+# The dual descent algorithm
   def dual_descent(x,G,constraints,objective)
     #initialize lambda to all 0s
     lambda = np.zeros(len(G),1)
