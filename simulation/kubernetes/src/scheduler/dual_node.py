@@ -14,7 +14,7 @@ class Node:
   #The stopping condition for the algorithm (e.g., subsequent iterations varying below a set tolerance)
   #This has to look at a global perspective, and so requires communication for whether everyone is done or not
   def stopcondition(self):
-    return true
+    return True
 
 
   #The sharing function that handles how nodes share x values with each other.
