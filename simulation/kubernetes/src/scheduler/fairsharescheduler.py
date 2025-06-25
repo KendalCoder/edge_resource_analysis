@@ -1,4 +1,5 @@
 from .scheduler import Scheduler
+from .dual_node import run_dual_node 
 
 # Assigns jobs to a random node, irrespective of its load
 class FairshareScheduler(Scheduler):
@@ -17,12 +18,21 @@ class FairshareScheduler(Scheduler):
     def step(self, workloads: list, cluster):
         tally = []
         virtual_nodes = cluster.nodes.copy()
+        # 🔹 NEW: Run dual descent for each node before scheduling
+
+        for node in virtual_nodes.values():
+            try:
+                result = run_dual_descent(node)
+                if result is not None:
+                    print(f"[FairshareScheduler] {node.name} dual descent result:\n{result}")
+            except Exception as e:
+                print(f"[FairshareScheduler] Dual descent failed for {node.name}: {e}")
+
+        # 🔹 Schedule workloads as usual
         for workload in workloads:
             planned_schedule = self.schedule(tally, workload, list(virtual_nodes.values()))
-            # If the workload cannot be scheduled, skip it
             if planned_schedule is None:
                 continue
-
             # Update the virtual node with the new job placement
             _, virtual_node = planned_schedule
             virtual_node.place_pod(workload, cluster.current_step)
