@@ -1,9 +1,9 @@
 import cvxpy as cp
 import numpy as np
 
-class node()
+class Node:
 
-  def __init__(self,constraints,x,objective,G,id)
+  def __init__(self,constraints,x,objective,G,id):
     self.constraints = constraints
     self.x = x
     self.objective = objective
@@ -13,20 +13,20 @@ class node()
 
   #The stopping condition for the algorithm (e.g., subsequent iterations varying below a set tolerance)
   #This has to look at a global perspective, and so requires communication for whether everyone is done or not
-  def stopcondition()
+  def stopcondition(self):
     return true
 
 
   #The sharing function that handles how nodes share x values with each other.
   #This takes as input this node's updated x value(s), and returns the full x vector
   #relevant to this node, including its own x value(s)
-  def share(my_x)
+  def share(self, my_x):
     return 1
 
   #The dual descent algorithm
-  def dual_descent()
+  def dual_descent():
     #initialize lambda to all 0s
-    lambda = np.zeros(len(self.G),1)
+    lambda_vec = np.zeros((self.Gshape[0], 1))
     #Set the stepsize alpha (tunable parameter)
     alpha = 1
     #Define indexing that lets us grab either all x_i or all other x except x_i
@@ -37,23 +37,23 @@ class node()
     x_ibar = []
     #initialize this node's current understanding of all other relevant nodes' x
     #This is needed to perform the primal and dual updates properly.
-    currentx = zeros(G.shape[1],1)
+    currentx = np.zeros(G.shape[1],1)
 
-    while self.stopcondition()
+    while self.stopcondition():
       #Step 1: Primal Update
       #Create the current objective with current lambda
-      currentobj = cp.Maximize(self.objective + (lambda.transpose @ G @ x))
+      currentobj = cp.Maximize(self.objective + lambda_vec.T @ self.G @ self.x)
       #Fix all x other than this node's own copies
-      constraints = [constraints, x[x_ibar] == currentx[x_ibar]]
+      primal_constraints = self.constraints + [self.x[i] == current_x[i] for i in range(self.G.shape[1]) if i != self.id]
       #solve
-      currentprob = cp.Problem(currentobj,constraints)
+      currentprob = cp.Problem(currentobj, primal_constraints)
       currentprob.solve()
 
       #Step 2: Sharing Step
       currentx = self.share(x.value)
 
       #Step 3: Dual Update
-      lambda = lambda - alpha * G @ currentx
+      lambda_vec = lambda_vec - alpha * G @ currentx
 
     #once complete, return this node's own decision (but not others)
     return x.value
