@@ -46,7 +46,7 @@ class FairshareScheduler(Scheduler):
                 node.energy_consumed = 0.0
             node.energy_consumed += node.power_watts * 1.0
 
-            print(f"[ENERGY] {node.name} - CPU: {cpu}, Power: {node.power_watts:.2f}, Energy Consumed: {node.energy_consumed:.2f}")
+            print(f"[DEBUG] {node.name} - CPU: {cpu}, Power: {node.power_watts:.2f}, Energy: {node.energy_consumed:.2f}")
 
             if hasattr(cluster, "writer"):
                 cluster.writer.add_scalar(f"{node.name}/Energy", node.energy_consumed, cluster.current_step)

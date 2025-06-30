@@ -47,6 +47,20 @@ class WaggleScheduler(Scheduler):
                 decisions.append(decision)
                 _, virtual_node = decision
                 virtual_node.place_pod(workload, cluster.current_step)
+                # 🔋 Energy tracking
+        for node in virtual_nodes.values():
+            cpu = node.metrics.get("cpu", 0)
+            node.power_watts = cpu * 2.5
+            if not hasattr(node, "energy_consumed"):
+                node.energy_consumed = 0.0
+            node.energy_consumed += node.power_watts * 1.0
+
+            print(f"[DEBUG] {node.name} CPU: {cpu}, Power: {node.power_watts:.2f}, Energy: {node.energy_consumed:.2f}")
+
+            if hasattr(cluster, "writer"):
+                cluster.writer.add_scalar(f"{node.name}/Energy", node.energy_consumed, cluster.current_step)
+                cluster.writer.add_scalar(f"{node.name}/CPU", cpu, cluster.current_step)
+
         return decisions
 
     def evaluate(self, cluster):
