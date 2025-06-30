@@ -1,5 +1,5 @@
 from .scheduler import Scheduler
-from .dual_node import run_dual_node 
+
 
 # Assigns jobs to a random node, irrespective of its load
 class FairshareScheduler(Scheduler):
