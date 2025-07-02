@@ -39,7 +39,7 @@ class FairshareScheduler(Scheduler):
 
             tally.append(planned_schedule)
 
-        for node in virtual_nodes.values():
+        for node in cluster.nodes.values():
             cpu = node.metrics.get("cpu", 0)
             node.power_watts = cpu * 2.5
             if not hasattr(node, "energy_consumed"):

@@ -1,7 +1,7 @@
 import cvxpy as cp
 import numpy as np
 
-class Node:
+class DualDescent(Scheduler):
 
   def __init__(self,constraints,x,objective,G,id):
     self.constraints = constraints

@@ -90,8 +90,9 @@ class XavierNX:
 		cpu_usage = round(cumulated_cpu / self.capacity_cpu * 100)
 		self.metrics["power"] = self.estimate_power(cpu_usage)
 
-		# Update total energy consumption
-		# The unit is Watt * step.
+
+		# Update total energy consumption, unit is Watt * hour
+		# The unit is Watt * step (5 mins)
 		# Update the moving average of power consumption
 		if "power_history" not in self.internal_metrics:
 			self.internal_metrics["power_history"] = []
@@ -99,6 +100,7 @@ class XavierNX:
 		if len(self.internal_metrics["power_history"]) > 3:  # Assuming a window size of 10
 			self.internal_metrics["power_history"].pop(0)
 		self.metrics["power_moving_average"] = np.mean(self.internal_metrics["power_history"])
+		self.metrics["energy"] = self.metrics["power"] * 0.0833  # Convert to Watt * hour (5 mins = 1/12 hour)
 
 	def update(self, step, events: list):
 		# Update the resource usage of the node
