@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from tensorboard.backend.event_processing.event_accumulator import EventAccumulator
 
-log_dir = "home/kendal/edge_resource_analysis/simulation/kubernetes/runs/20250702-171434"  #log directory
+log_dir = "kubernetes/logs/20250702-171434/events.out.tfevents.1751494474.lemont"  #log directory
 
 # Check if the log directory exists before proceeding
 if not os.path.exists(log_dir):
