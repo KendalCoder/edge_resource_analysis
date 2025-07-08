@@ -1,59 +1,114 @@
 import cvxpy as cp
 import numpy as np
 
+
+
 class DualDescent(Scheduler):
 
-  def __init__(self,constraints,x,objective,G,id):
-    self.constraints = constraints
-    self.x = x
-    self.objective = objective
-    self.G = G
-    self.id = id
+    def __init__(self, constraints, x, objective, G, node_id):
+        
+
+        """
+        Initialize the Dual Descent scheduler.
+        Args:
+
+            constraints (list): List of cvxpy constraints for this node.
+
+            x (cvxpy.Variable): Decision variable(s) for this node.
+
+            objective (cvxpy.Expression): Objective function for this node.
+
+            G (np.ndarray): Coupling matrix between nodes.
+
+            node_id (int): Identifier/index of this node.
+
+        """
 
 
-  #The stopping condition for the algorithm (e.g., subsequent iterations varying below a set tolerance)
-  #This has to look at a global perspective, and so requires communication for whether everyone is done or not
-  def stopcondition(self):
-    return True
+        self.constraints = constraints
+
+        self.x = x
+
+        self.objective = objective
+
+        self.G = G
+
+        self.node_id = node_id
+
+        self.lambda_vec = np.zeros((G.shape[0], 1))
+
+        self.alpha = 1  # Step size (can be tuned)
+
+        self.current_x = np.zeros((G.shape[1], 1))  # Estimates of all nodes' variables
 
 
-  #The sharing function that handles how nodes share x values with each other.
-  #This takes as input this node's updated x value(s), and returns the full x vector
-  #relevant to this node, including its own x value(s)
-  def share(self, my_x):
-    return 1
+    def stopcondition(self):
 
-  #The dual descent algorithm
-  def dual_descent():
-    #initialize lambda to all 0s
-    lambda_vec = np.zeros((self.Gshape[0], 1))
-    #Set the stepsize alpha (tunable parameter)
-    alpha = 1
-    #Define indexing that lets us grab either all x_i or all other x except x_i
-    #This is left unspecified since the ordering for x & G may change. However,
-    #I would recommend using the ordering presented in the CDC paper, since it
-    #works with how I've defined the updates for currentobj and lambda.
-    x_i = []
-    x_ibar = []
-    #initialize this node's current understanding of all other relevant nodes' x
-    #This is needed to perform the primal and dual updates properly.
-    currentx = np.zeros(G.shape[1],1)
+        
 
-    while self.stopcondition():
-      #Step 1: Primal Update
-      #Create the current objective with current lambda
-      currentobj = cp.Maximize(self.objective + lambda_vec.T @ self.G @ self.x)
-      #Fix all x other than this node's own copies
-      primal_constraints = self.constraints + [self.x[i] == current_x[i] for i in range(self.G.shape[1]) if i != self.id]
-      #solve
-      currentprob = cp.Problem(currentobj, primal_constraints)
-      currentprob.solve()
+        #Define stopping condition for the dual descent algorithm.        # Returns: bool: True if stopping condition is met, False otherwise.
+        # This could be based on convergence criteria, maximum iterations, or tolerance level.
+       #Currently always returns True (should be replaced with actual logic)
+        
 
-      #Step 2: Sharing Step
-      currentx = self.share(x.value)
+        # TODO: Implement convergence check based on tolerance or max iterations
 
-      #Step 3: Dual Update
-      lambda_vec = lambda_vec - alpha * G @ currentx
+        return True
 
-    #once complete, return this node's own decision (but not others)
-    return x.value
+
+    def share(self, my_x):
+
+        #Share updated decision variables with other nodes. my_x (np.ndarray): This node's updated decision variables. 
+        # Returns:np.ndarray: Updated global decision vector including this node's value.
+
+        # TODO: Implement communication logic with other nodes
+
+        # For now, just returns 1 as placeholder
+
+        return 1
+
+
+    def schedule(self):
+
+        #Run the dual descent algorithm until stopping condition is met. This method performs primal and dual updates iteratively.
+        # Returns: np.ndarray: This node's optimized decision variables.
+        
+
+        while not self.stopcondition():
+
+            # Step 1: Primal update
+
+            current_obj = cp.Maximize(self.objective + self.lambda_vec.T @ self.G @ self.x)
+
+            
+
+            # Fix x variables for other nodes to current estimates
+
+            primal_constraints = self.constraints + [
+
+                self.x[i] == self.current_x[i] for i in range(self.G.shape[1]) if i != self.node_id
+
+            ]
+
+
+            prob = cp.Problem(current_obj, primal_constraints)
+
+            prob.solve()
+
+          
+            # Step 2: Share updated x with other nodes
+
+            self.current_x = self.share(self.x.value)
+
+            
+
+            # Step 3: Dual update
+
+            self.lambda_vec = self.lambda_vec - self.alpha * self.G @ self.current_x
+
+
+        # Return this node's decision variable value
+        return self.x.value
+
+
+
