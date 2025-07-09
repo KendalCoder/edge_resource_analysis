@@ -1,80 +1,38 @@
-import pandas as pd
-import os
-import matplotlib.pyplot as plt
-import seaborn as sns
+def simulate_scheduler_log(log_dir, scheduler_name, num_steps=10):
 
-def compute_node_metrics(task_log_path, scheduler_name):
-    if not os.path.exists(task_log_path):
-        print(f"[ERROR] Log file not found: {task_log_path}")
-        return None
+    path = os.path.join(log_dir, scheduler_name)
+    os.makedirs(path, exist_ok=True)
+    writer = SummaryWriter(log_dir=path)
+    for step in range(num_steps):
 
-    df = pd.read_csv(task_log_path)
+        # Simulate scalar logs
+        loss = 0.5 / (step + 1)
+        energy = 50 + step * 2
+        duration = 5 + (step % 3)
 
-    if not {"task_id", "node_id", "start_time", "end_time", "energy_used_j"}.issubset(df.columns):
-        print(f"[ERROR] Log file missing required columns: {task_log_path}")
-        return None
 
-    df["exec_time"] = df["end_time"] - df["start_time"]
+        writer.add_scalar("loss", loss, step)
+        writer.add_scalar("energy_used", energy, step)
+        writer.add_scalar("task_duration", duration, step)
 
-    grouped = df.groupby("node_id").agg({
-        "task_id": "count",
-        "energy_used_j": "mean",
-        "exec_time": "mean"
-    }).reset_index()
+        time.sleep(0.01)  # slight delay to vary timestamps
+    writer.close()
 
-    grouped.rename(columns={
-        "task_id": "num_tasks",
-        "energy_used_j": "mean_energy",
-        "exec_time": "avg_task_time"
-    }, inplace=True)
-
-    grouped["scheduler"] = scheduler_name
-
-    return grouped
-
-def compare_schedulers(log_dir, scheduler_list):
-    all_results = []
-
-    for scheduler in scheduler_list:
-        log_path = os.path.join(log_dir, f"{scheduler}_task_log.csv")
-        metrics = compute_node_metrics(log_path, scheduler)
-        if metrics is not None:
-            all_results.append(metrics)
-
-    if not all_results:
-        print("[ERROR] No results to compare.")
-        return None
-
-    combined = pd.concat(all_results, ignore_index=True)
-
-    # Save to CSV
-    combined.to_csv("scheduler_comparison_metrics.csv", index=False)
-    print("[INFO] Metrics comparison saved to scheduler_comparison_metrics.csv")
-
-    return combined
-
-def plot_metric(df, metric_name):
-    plt.figure(figsize=(10, 6))
-    sns.barplot(data=df, x="node_id", y=metric_name, hue="scheduler")
-    plt.title(f"{metric_name.replace('_', ' ').title()} per Node by Scheduler")
-    plt.ylabel(metric_name.replace("_", " ").title())
-    plt.xlabel("Node ID")
-    plt.tight_layout()
-    plt.show()
-
+    print(f"[INFO] Created log at: {path}")
 if __name__ == "__main__":
-    # List your scheduler names exactly as used in the filenames
-    schedulers = ["WaggleScheduler", "FairshareScheduler"]
+    base_log_dir = "generated_logs"
+    simulate_scheduler_log(base_log_dir, "WaggleScheduler")
+    simulate_scheduler_log(base_log_dir, "FairshareScheduler")
+
+
+
     
-    # Directory where log files like WaggleScheduler_task_log.csv are stored
-    log_directory = "logs"
 
-    metrics_df = compare_schedulers(log_directory, schedulers)
+             # === Part 2: Scheduler metrics & data (Task 2) ===
+    # === Part 3: Scheduler log comparison (Task 3) ===
+    log_dir_task = "logs"  # folder with task logs like WaggleScheduler_task_log.csv
+    schedulers = ["WaggleScheduler", "FairshareScheduler"]
 
+    metrics_df = compare_schedulers(log_dir_task, schedulers)
     if metrics_df is not None:
-        # Plot each metric
-        for metric in ["mean_energy", "num_tasks", "avg_task_time"]:
-            plot_metric(metrics_df, metric)
-
-
-            
+        plot_metrics_per_scheduler(metrics_df)
