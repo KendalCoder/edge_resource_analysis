@@ -1,4 +1,6 @@
+import os
 import tensorboardX as tb
+from tensorboardX import SummaryWriter
 from datetime import datetime
 
 class TensorBoard:
