@@ -1,7 +1,7 @@
 #env: waggle
 #workload: bitbrain
 scheduler: WaggleScheduler
-# scheduler: FairshareScheduler
+#scheduler: FairshareScheduler
 dataloader: JobLoader
 # dataloader: SimpleLoader
 steps: 50
@@ -18,13 +18,36 @@ hosts:
 #   labels:
 #     waggle.io/type: wsn
 #     waggle.io/group: chicago
+
 - name: T002-nxcore
   device: xaviernx
   labels:
     waggle.io/type: wsn
     waggle.io/group: chicago
+
 # - name: T003-nxcore
 #   device: xaviernx
 #   labels:
 #     waggle.io/type: wsn
 #     waggle.io/group: chicago
+
+# - name: T004-rpi
+#   device: rpi
+#   labels:
+#     waggle.io/type: wsn
+#     waggle.io/group: chicago
+
+
+# - name: T005-jetson
+#  device: jetson
+#  labels:
+#    waggle.io/type: wsn
+#    waggle.io/group: chicago
+
+
+# - name: T006-jetson
+#   device: jetson
+#   labels:
+#     waggle.io/type: wsn
+#     waggle.io/group: chicago
+
