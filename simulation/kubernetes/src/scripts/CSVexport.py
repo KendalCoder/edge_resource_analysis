@@ -8,6 +8,7 @@ from tensorboard.backend.event_processing.event_accumulator import EventAccumula
 from torch.utils.tensorboard import SummaryWriter
 import time 
 
+
 def tensorboard_to_csv(log_dir, output_csv):
     print(f"[INFO] Loading TensorBoard logs from: {log_dir}")
     ea = EventAccumulator(log_dir)
@@ -15,7 +16,7 @@ def tensorboard_to_csv(log_dir, output_csv):
 
     all_scalars = []
 
-    for tag in ea.Tags().get('scalars', []):
+    for tag in ea.Tags()['scalars']:
         events = ea.Scalars(tag)
         for e in events:
             all_scalars.append({
@@ -89,7 +90,6 @@ def compare_schedulers(log_dir, scheduler_list):
 
 
 def summarize_overall_scheduler_performance(df):
-
     summary = df.groupby("scheduler").agg({
         "num_tasks": "sum",
         "total_energy": "sum",
@@ -99,8 +99,17 @@ def summarize_overall_scheduler_performance(df):
 
     print("\n=== Scheduler Summary ===")
     print(summary)
-    return summary
 
+
+    # Plot using pandas
+    ax = summary.plot(x="scheduler", kind="bar", figsize=(10, 6), title="Scheduler Comparison")
+    ax.set_ylabel("Metric Value")
+    ax.set_xlabel("Scheduler")
+    plt.tight_layout()
+    plt.savefig("scheduler_summary_pandas_plot.png")
+    plt.show()
+
+    return summary
 
 
 # plot_metrics is not defined; use plot_metrics_per_scheduler instead
@@ -115,17 +124,13 @@ def summarize_overall_scheduler_performance(df):
 def plot_metrics_per_scheduler(df, save_dir="plots"):
     os.makedirs(save_dir, exist_ok=True)
 
-
     # Summarize key metrics per scheduler
 
     summary = df.groupby("scheduler").agg({
 
         "num_tasks": "sum",
-
         "total_energy": "sum",
-
         "avg_task_time": "mean",
-
         "task_efficiency": "mean"
 
     }).reset_index()
@@ -136,21 +141,15 @@ def plot_metrics_per_scheduler(df, save_dir="plots"):
     for column in summary.columns[1:]:
 
         plt.figure(figsize=(8, 5))
-
         sns.barplot(data=summary, x="scheduler", y=column, palette="viridis")
-
         plt.title(f"{column.replace('_', ' ').title()} per Scheduler")
-
         plt.ylabel(column.replace('_', ' ').title())
-
         plt.xlabel("Scheduler")
         plt.tight_layout()
 
 
         plot_file = os.path.join(save_dir, f"{column}_per_scheduler.png")
-
         plt.savefig(plot_file)
-
         plt.close()
 
         print(f"[INFO] Saved: {plot_file}")
@@ -173,7 +172,8 @@ def pick_log_dir(base_dir, strategy="latest"):
 
 if __name__ == "__main__":
     # === Part 1: Export TensorBoard scalars ===
-    log_dir_event_file = "kubernetes/logs/20250702-171434/events.out.tfevents.1751494474.lemont"
+    log_dir_event_file = "kubernetes/logs/20250702-171434"  # Path to the TensorBoard event file
+    # Note: Adjust the path to your actual TensorBoard event file location
     output_csv = "scheduler_metrics.csv"
 
     if os.path.exists(log_dir_event_file):
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     else:
         print(f"[ERROR] TensorBoard event file not found: {log_dir_event_file}")
 
-
+     
 
     # === Part 2: Scheduler metrics & data (Task 2) ===
     # === Part 3: Scheduler log comparison (Task 3) ===
@@ -205,7 +205,17 @@ if __name__ == "__main__":
         writer.close()
 
         print(f"[INFO] Created log at: {path}")
+
+
+
 if __name__ == "__main__":
-    base_log_dir = "generated_logs"
-    simulate_scheduler_log(base_log_dir, "WaggleScheduler")
-    simulate_scheduler_log(base_log_dir, "FairshareScheduler")
+    # Simulate dummy logs for two schedulers
+    simulate_scheduler_log("logs", "RandomScheduler")
+    simulate_scheduler_log("logs", "FairScheduler")
+
+    # Compare them
+    metrics_df = compare_schedulers("logs", ["RandomScheduler", "FairScheduler"])
+
+    if metrics_df is not None:
+        summarize_overall_scheduler_performance(metrics_df)
+        plot_metrics_per_scheduler(metrics_df)
