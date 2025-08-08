@@ -46,7 +46,7 @@ To create a cluster,
 ```bash
 
 python3 run.py --config mywaggle.yaml
-
+```
 
 To see plots on tensorboard 
 ```bash
@@ -64,19 +64,49 @@ Open your browser and go to:
 ```
 http://localhost:6006
 ```
-#TODO descibe how to interpret results in tensorboard 
+## Interpreting Results in TensorBoard
+
+After launching TensorBoard with `tensorboard --logdir logs/`, open the provided link in your browser (usually http://localhost:6006). You will see a dashboard with several tabs and plots.
+
+### Key Steps
+
+1. **Select the Run(s):**
+    - On the left panel, choose the experiment(s) you want to view. Each run ( different schedulers or configurations) appears as a separate entry.
+
+2. **Focus on Relevant Metrics:**
+    - Common metrics logged include:
+      - **Energy Usage:** Tracks total or per-node energy consumption over time.
+      - **Task Duration:** Shows how long tasks take to complete.
+      - **CPU/Resource Utilization:** Indicates how efficiently resources are used.
+      - **Task Efficiency:** Tasks completed per unit time.
+    - Use the "Scalars" tab to view these metrics as line plots.
+
+3. **Compare Runs or Configurations:**
+    - Overlay multiple runs to compare different schedulers or parameter settings.
+    - Use the checkboxes to toggle visibility of each run.
+    - Look for trends, such as lower energy usage or shorter task durations, to identify better-performing schedulers.
+
+4. **Tips and Caveats:**
+    - Hover over plots to see exact values at each step.
+    - Use smoothing to reduce noise in plots, but be careful not to over-smooth and hide important details.
+    - If metrics are missing, ensure your simulation and logging scripts are configured correctly.
+    - For large logs, TensorBoard may take time to load all data.
+
+### Example: Comparing Schedulers
+
+- If you ran simulations with both `Waggle Scheduler` and `FairShareScheduler`, select both runs and compare their energy usage and task duration plots.
+- A scheduler with lower energy usage and shorter task durations is generally more efficient.
+
+For more details, refer to the [TensorBoard Getting Started Guide](https://www.tensorflow.org/tensorboard/get_started). 
 
 
 
 ##  File Overview (Visualization)
  Description : 
 
-| `scripts/CSVexport.py`            | Handles saving of performance and energy metrics.|
-#TODO : Be more specific in what csv export does
+| `scripts/CSVexport.py`            | Handles saving of performance and energy metrics.Extracts scalar metrics (such as energy usage, task duration, CPU load, etc.) from TensorBoard `.tfevents` logs and converts them into a structured CSV file. The CSV includes columns for step, metric tag, and value, making it easier to analyze and visualize simulation results outside of TensorBoard. The script can automatically select the latest log directory and supports exporting logs for different schedulers by adjusting configuration lines. |
 
-| `src/scripts/visualization.py`|
-
-#TODO description
+| `src/scripts/visualization.py`  | Analyzes and visualizes metrics from exported CSV logs. It loads one or more scheduler CSV files, computes statistics such as total and average energy consumption, task durations, and efficiency, and generates comparative plots, bar charts, and summary tables. The script helps compare scheduler performance and outputs results as PNG images and summary CSV files for further analysis. |
 
 
 
@@ -99,21 +129,20 @@ pip install pandas matplotlib seaborn
 ## How to retrieve log to use for visualization 
 #### (Check which scheduler you ran from mywaggle.yaml )
 
--Go to logs and find the latest run or the run based on the date your looking for and change {DefaultScheduler} to the scheduler you ran . 
+- Go to logs and find the latest run or the run based on the date your looking for and change {DefaultScheduler} to the scheduler you ran . 
 
 
 ## How to Generate Plots from Logs
 
-Scheduler Log Analysis & Visualization
+### Scheduler Log Analysis & Visualization
 
 
-This section explains the purpose and usage of the two Python scripts (CSVexport.py & visualization.py) used to extract, process, and visualize metrics from scheduler logs in the edge computing simulation project.
+- This section explains the purpose and usage of the two Python scripts (CSVexport.py & visualization.py) used to extract, process, and visualize metrics from scheduler logs in the edge computing simulation project.
 
 
-⸻
 
 
-1. CSVexport .py
+## 1. CSVexport .py
 
 
 Purpose:
@@ -147,12 +176,12 @@ Ex:  output_csv = "FairShareScheduler_task_log.csv"
  
  - Change the directory by using cd src/scripts
 
- Go to CSVexport file 
+ #### Go to CSVexport file 
 Run & Debug on left side panel in VScode or whatever code runner for your IDE 
 
 or 
 
-Bash
+#### Bash
 ```
 python3 CSVexport.py 
 ```
@@ -160,10 +189,9 @@ python3 CSVexport.py
 Output: a CSV file like FairShareScheduler_task_log.csv.
 
 
-⸻
 
 
-2. Visualization .py
+## 2. Visualization .py
 
 
 Purpose:
@@ -197,29 +225,31 @@ How to Use:
 2. Define your list of scheduler names (e.g., ["WaggleScheduler", "FairScheduler"]).
 
 
-Go to 
+#### Go to 
+```
 vis-interactive.ipynb
-
+```
  Or 
 
-Bash 
-
+#### Bash 
+```
 python3 visualization.py
+```
 
 
 
-
-# Outputs:
-
-
-## Where Logs Are Saved
+## Outputs:
 
 
-Simulation logs are saved to the /logs/ directory. You’ll find:
+### Where Logs Are Saved
+
+
+Simulation logs are saved to the /logs/ directory. 
+You’ll find:
+
 ```
 • {scheduler name} tasks.csv: logs for all tasks (start time, end time, node used, energy consumed, etc.)
 ```
-
 
 • scheduler_comparison_metrics.csv: a summary table
 
@@ -229,11 +259,12 @@ Simulation logs are saved to the /logs/ directory. You’ll find:
 
 
 
-Example Output Plots:
+### Example Output Plots:
+```
+•total_energy_per_scheduler.png
 
-• total_energy_per_scheduler.png
+•avg_task_time_per_scheduler.png
 
-• avg_task_time_per_scheduler.png
-
-• task_efficiency_per_scheduler.png
+•task_efficiency_per_scheduler.png
+```
 
