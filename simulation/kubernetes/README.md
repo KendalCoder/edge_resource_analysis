@@ -4,27 +4,6 @@ This simulation forms a computing cluster of multiple devices and creates worklo
 ## Install Dependencies
  `pip3 install -r requirements.txt`
 
-## Quick Start
-To start a simulation, simply run,
-
-```bash
-# Uses mywaggle configuration to set up the simulation
-python3 run.py --config mywaggle.yaml
-```
-
-After the simulation is finished (or during the simulation), open Tensorboard to see the result,
-
-```bash
-tensorboard --logdir logs/
-```
-- You should see the link after running this command 
-- Open the link and see the graphs and plots
-
-These are useful links about Tensorboard:
-https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.tensorflow.org/tensorboard/get_started&ved=2ahUKEwi2k6HGsYqOAxUPPjQIHZMlI6sQFnoECBIQAQ&usg=AOvVaw2zoEfsLy_AcckWcLnf6tdT
-
-https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.datacamp.com/tutorial/tensorboard-tutorial&ved=2ahUKEwinkMXUsYqOAxWEOTQIHbXsBewQFnoECEIQAQ&usg=AOvVaw2SiaeB3BS3Eb2vzAyU_HLc
-
 
 ## Using a Simple Cluster
 This cluster creates simulated nodes and workloads. 
@@ -40,18 +19,25 @@ To create a cluster,
 ./setup.sh
 ```
 
-## How to Run a Simulation
+## Quick Start
 
+
+To start a simulation, simply run,
 
 ```bash
-
+# Uses mywaggle configuration to set up the simulation
 python3 run.py --config mywaggle.yaml
 ```
 
-To see plots on tensorboard 
+#### After the simulation is finished (or during the simulation), open Tensorboard to see the result
+
 ```bash
 tensorboard --logdir logs/
 ```
+- You should see the link after running this command 
+- Open the link and see the graphs and plots
+
+
 
 
 TensorBoard will start a local web server. You’ll see output like:
@@ -64,6 +50,12 @@ Open your browser and go to:
 ```
 http://localhost:6006
 ```
+
+These are useful links about Tensorboard:
+https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.tensorflow.org/tensorboard/get_started&ved=2ahUKEwi2k6HGsYqOAxUPPjQIHZMlI6sQFnoECBIQAQ&usg=AOvVaw2zoEfsLy_AcckWcLnf6tdT
+
+https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://www.datacamp.com/tutorial/tensorboard-tutorial&ved=2ahUKEwinkMXUsYqOAxWEOTQIHbXsBewQFnoECEIQAQ&usg=AOvVaw2SiaeB3BS3Eb2vzAyU_HLc
+
 ## Interpreting Results in TensorBoard
 
 After launching TensorBoard with `tensorboard --logdir logs/`, open the provided link in your browser (usually http://localhost:6006). You will see a dashboard with several tabs and plots.
@@ -80,6 +72,11 @@ After launching TensorBoard with `tensorboard --logdir logs/`, open the provided
       - **CPU/Resource Utilization:** Indicates how efficiently resources are used.
       - **Task Efficiency:** Tasks completed per unit time.
     - Use the "Scalars" tab to view these metrics as line plots.
+
+
+Ex : node_t001-nxcore_cpu
+node_t002-nxcore_finished_workloads
+
 
 3. **Compare Runs or Configurations:**
     - Overlay multiple runs to compare different schedulers or parameter settings.
@@ -156,8 +153,6 @@ What It Does:
 
 • Outputs a CSV file with columns: step, tag, and value.
 
-• Includes a helper to pick the latest log directory automatically.
-
 • Can also simulate logs using SummaryWriter (for testing visualizations).
 
 
@@ -176,7 +171,8 @@ Ex:  output_csv = "FairShareScheduler_task_log.csv"
  
  - Change the directory by using cd src/scripts
 
- #### Go to CSVexport file 
+  Go to CSVexport file 
+
 Run & Debug on left side panel in VScode or whatever code runner for your IDE 
 
 or 
@@ -193,6 +189,8 @@ Output: a CSV file like FairShareScheduler_task_log.csv.
 
 ## 2. Visualization .py
 
+
+> warning : under development 
 
 Purpose:
 
@@ -220,9 +218,9 @@ Main Features:
 
 How to Use:
 
-1. Ensure you have one or more log CSVs from tensorboard_to_csv.py.
+1. Ensure you have one or more log CSVs from CSVexport.py.
 
-2. Define your list of scheduler names (e.g., ["WaggleScheduler", "FairScheduler"]).
+2. Define your schedulers name in ipynb for the filename ["WaggleScheduler", "FairScheduler"] or in visualization.py .
 
 
 #### Go to 
@@ -244,14 +242,14 @@ python3 visualization.py
 ### Where Logs Are Saved
 
 
-Simulation logs are saved to the /logs/ directory. 
-You’ll find:
+Simulation logs are saved
+
+You’ll find in this directory :
 
 ```
 • {scheduler name} tasks.csv: logs for all tasks (start time, end time, node used, energy consumed, etc.)
 ```
 
-• scheduler_comparison_metrics.csv: a summary table
 
 • .png plots for each metric in the plots/ directory
 
