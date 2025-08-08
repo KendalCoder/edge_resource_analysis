@@ -160,7 +160,7 @@ if __name__ == "__main__":
 
 
     # Compare them
-    metrics_df = compare_schedulers("./", ["FairScheduler"])
+    metrics_df = compare_schedulers("./", ["FairShareScheduler"])
 
     if metrics_df is not None:
         summarize_overall_scheduler_performance(metrics_df)
